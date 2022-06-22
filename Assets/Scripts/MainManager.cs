@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 public class MainManager : MonoBehaviour
 {
@@ -18,10 +19,19 @@ public class MainManager : MonoBehaviour
     
     private bool m_GameOver = false;
 
-    
+    public static int highScore;
+    public static int currentHigh;
+    public Text highScoreText;
+    public static string highScoreName;
+
+    private void Awake()
+    {
+        Load();
+    }
     // Start is called before the first frame update
     void Start()
     {
+       
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -35,7 +45,7 @@ public class MainManager : MonoBehaviour
                 brick.PointValue = pointCountArray[i];
                 brick.onDestroyed.AddListener(AddPoint);
             }
-        }
+        } 
     }
 
     private void Update()
@@ -55,11 +65,17 @@ public class MainManager : MonoBehaviour
         }
         else if (m_GameOver)
         {
+
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                //highScore = 0;
             }
         }
+
+        highScoreText.text = "High Score: " + highScoreName + ": " + currentHigh;
+
+        highScore = m_Points;
     }
 
     void AddPoint(int point)
@@ -72,5 +88,40 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        UpdateHighScore();
+    }
+
+    public void Load()
+    {
+        highScoreName = PlayerPrefs.GetString("highScoreName");
+        currentHigh = PlayerPrefs.GetInt("highScore", currentHigh);
+    } 
+
+    void UpdateHighScore()
+    {
+        if (highScore > currentHigh)
+        {
+            currentHigh = highScore;
+            PlayerPrefs.SetInt("highScore", currentHigh);
+            PlayerPrefs.SetString("Name", NameSaver.playerName);
+            highScoreName = PlayerPrefs.GetString("Name", NameSaver.playerName);
+            PlayerPrefs.SetString("highScoreName", highScoreName);
+        }
+    }
+
+    private void OnApplicationFocus(bool focus)
+    {
+        if (!focus)
+        {
+            PlayerPrefs.SetInt("highScore", currentHigh);
+            PlayerPrefs.SetString("highScoreName", highScoreName);
+        }
+    }
+
+    public void resetScore()
+    {
+        PlayerPrefs.SetInt("highScore", 0);
+        PlayerPrefs.SetString("highScoreName", "");
+        Load();
     }
 }
